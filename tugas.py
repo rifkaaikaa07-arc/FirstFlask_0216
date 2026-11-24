@@ -2,23 +2,35 @@ from flask import Flask, render_template, request
 
 app = Flask(__name__)
 
-
-# Halaman utama: GET menampilkan form, POST memproses isi form
 @app.route("/", methods=["GET", "POST"])
 def index():
     nama = ""
+    umur = ""
+    nim = ""
     hasil = ""
+    sukses = True
 
     if request.method == "POST":
-        # Mengambil isi textfield yang atribut name-nya "nama"
         nama = request.form.get("nama", "").strip()
+        umur = request.form.get("umur", "").strip()
+        nim = request.form.get("nim", "").strip()
 
-        if nama == "":
-            hasil = "Nama tidak boleh kosong!"
+        if nama == "" or umur == "" or nim == "":
+            hasil = "Semua data harus diisi!"
+            sukses = False
+        elif not umur.isdigit() or not (1 <= int(umur) <= 80):
+            hasil = "Umur harus berupa angka 1 - 80!"
+            sukses = False
+        elif not nim.isdigit():
+            hasil = "NIM harus berupa angka!"
+            sukses = False
         else:
-            hasil = f"Halo, {nama}!"
+            hasil = f"Halo, {nama}! Umur {umur} tahun, NIM {nim}."
 
-    return render_template("index.html", nama=nama, hasil=hasil)
+    return render_template(
+        "index.html",
+        nama=nama, umur=umur, nim=nim, hasil=hasil, sukses=sukses
+    )
 
 
 @app.route("/about")

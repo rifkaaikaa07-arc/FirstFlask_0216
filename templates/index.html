@@ -1,24 +1,102 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Flask Method POST</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Form mahasiswa</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 <body>
-    <div class="card">
-        <h1>Form Sederhana</h1>
+  <div class="card">
+    <h1>Form mahasiswa</h1>
+    <div class="progress" id="progress"></div>
 
-        <form method="POST" action="/">
-            <label for="nama">Nama</label>
-            <input type="text" id="nama" name="nama"
-                   placeholder="Masukkan nama" value="{{ nama }}">
+    <form id="form" novalidate>
+      <div class="step" data-name="nama">
+        <label for="nama">Nama</label>
+        <input id="nama" type="text" placeholder="Masukkan nama" autocomplete="off">
+      </div>
+      <div class="step" data-name="umur">
+        <label for="umur">Umur</label>
+        <input id="umur" type="number" min="1" placeholder="Masukkan umur">
+      </div>
+      <div class="step" data-name="nim">
+        <label for="nim">NIM</label>
+        <input id="nim" type="text" inputmode="numeric" placeholder="Masukkan NIM" autocomplete="off">
+      </div>
 
-            <button type="submit">Kirim</button>
-        </form>
+      <div class="step" id="hasil">
+        <dl id="ringkasan"></dl>
+      </div>
 
-        <label class="hasil">{{ hasil }}</label>
-    </div>
+      <div class="error" id="error" role="alert"></div>
+      <div class="actions">
+        <button type="button" class="secondary" id="kembali" hidden>Kembali</button>
+        <button type="submit" id="kirim">Kirim</button>
+      </div>
+    </form>
+  </div>
+
+<script>
+  const steps = [...document.querySelectorAll('.step[data-name]')];
+  const hasil = document.getElementById('hasil');
+  const form = document.getElementById('form');
+  const error = document.getElementById('error');
+  const kirim = document.getElementById('kirim');
+  const kembali = document.getElementById('kembali');
+  const progress = document.getElementById('progress');
+  const data = {};
+  let index = 0;
+
+  const validasi = {
+    nama: v => v.trim() ? '' : 'Nama wajib diisi.',
+    umur: v => (Number(v) > 0 ? '' : 'Umur harus berupa angka lebih dari 0.'),
+    nim:  v => /^\d+$/.test(v.trim()) ? '' : 'NIM harus berupa angka.'
+  };
+
+  function tampil() {
+    steps.forEach((s, i) => s.classList.toggle('active', i === index));
+    hasil.classList.remove('active');
+    progress.textContent = `Langkah ${index + 1} dari ${steps.length}`;
+    kirim.textContent = index === steps.length - 1 ? 'Selesai' : 'Kirim';
+    kembali.hidden = index === 0;
+    error.textContent = '';
+    steps[index].querySelector('input').focus();
+  }
+
+  form.addEventListener('submit', e => {
+    e.preventDefault();
+    const nama = steps[index].dataset.name;
+    const input = steps[index].querySelector('input');
+    const pesan = validasi[nama](input.value);
+    if (pesan) { error.textContent = pesan; return; }
+    data[nama] = input.value.trim();
+
+    if (index < steps.length - 1) {
+      index++;
+      tampil();
+    } else {
+      selesai();
+    }
+  });
+
+  kembali.addEventListener('click', () => { index--; tampil(); });
+
+  function selesai() {
+    steps.forEach(s => s.classList.remove('active'));
+    hasil.classList.add('active');
+    progress.textContent = 'Data berhasil dikirim';
+    document.getElementById('ringkasan').innerHTML =
+      `<dt>Nama</dt><dd>${esc(data.nama)}</dd>
+       <dt>Umur</dt><dd>${esc(data.umur)}</dd>
+       <dt>NIM</dt><dd>${esc(data.nim)}</dd>`;
+    kirim.hidden = true; kembali.hidden = true; error.textContent = '';
+    console.log('Data terkirim:', data);
+  }
+
+  const esc = s => s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+  tampil();
+</script>
 </body>
 </html>
